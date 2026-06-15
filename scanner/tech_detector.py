@@ -12,6 +12,11 @@ def detect_technology(url):
 
         headers = response.headers
 
+        print("\n=== HEADERS ===\n")
+
+        for key, value in headers.items():
+            print(f"{key}: {value}")
+
         technologies = {
             "server": "Unknown",
             "framework": "Unknown",
