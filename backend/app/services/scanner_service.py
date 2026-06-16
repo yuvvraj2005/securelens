@@ -54,3 +54,20 @@ def get_scan(scan_id):
         "score": scan.score,
         "report": json.loads(scan.report)
     }
+
+def get_all_scans():
+
+    db = SessionLocal()
+
+    scans = db.query(ScanResult).all()
+
+    db.close()
+
+    return [
+        {
+            "id": scan.id,
+            "target": scan.target,
+            "score": scan.score
+        }
+        for scan in scans
+    ]

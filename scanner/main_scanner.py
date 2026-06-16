@@ -25,22 +25,25 @@ def scan_website(url):
 
     ssl_results = get_ssl_info(normalized_url)
 
+    technology_results = detect_technology(
+        normalized_url
+    )
+
     # Calculate overall score
     score_results = calculate_score(
         header_results,
         ssl_results
     )
 
-    # Build final report
     report = {
         "target": normalized_url,
         "score": score_results,
         "headers": header_results,
-        "ssl": ssl_results
+        "ssl": ssl_results,
+        "technology": technology_results
     }
 
     return report
-
 
 if __name__ == "__main__":
 

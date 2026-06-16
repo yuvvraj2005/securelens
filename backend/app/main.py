@@ -3,7 +3,8 @@ from pydantic import BaseModel
 
 from backend.app.services.scanner_service import (
     run_scan,
-    get_scan
+    get_scan,
+    get_all_scans
 )
 
 import sys
@@ -42,3 +43,8 @@ def scan(request: ScanRequest):
 def get_saved_scan(scan_id: int):
 
     return get_scan(scan_id)
+
+@app.get("/scans")
+def list_scans():
+
+    return get_all_scans()
