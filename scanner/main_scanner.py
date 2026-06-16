@@ -1,6 +1,7 @@
-from header_scanner import scan_headers
-from ssl_scanner import get_ssl_info
-from score_engine import calculate_score
+from scanner.header_scanner import scan_headers
+from scanner.ssl_scanner import get_ssl_info
+from scanner.score_engine import calculate_score
+from scanner.tech_detector import detect_technology
 import json
 
 
