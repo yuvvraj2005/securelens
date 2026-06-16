@@ -1,4 +1,8 @@
-def calculate_score(header_report, ssl_report):
+def calculate_score(
+    header_report,
+    ssl_report,
+    nmap_report
+):
 
     score = 0
 

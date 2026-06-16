@@ -16,6 +16,7 @@ def scan_ports(url):
             [
                 "nmap",
                 "-F",
+                "-sV",
                 hostname
             ],
             capture_output=True,
@@ -33,7 +34,9 @@ def scan_ports(url):
                 ports.append(
                     {
                         "port": parts[0].split("/")[0],
-                        "service": parts[2]
+                        "state": parts[1],
+                        "service": parts[2],
+                        "version": " ".join(parts[3:]) if len(parts) > 3 else "Unknown"
                     }
                 )
 
