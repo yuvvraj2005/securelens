@@ -1,14 +1,17 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from backend.app.services.scanner_service import (
+    run_scan,
+    get_scan
+)
+
 import sys
 from pathlib import Path
 
 sys.path.append(
     str(Path(__file__).resolve().parents[2])
 )
-
-from scanner.main_scanner import scan_website
 
 app = FastAPI(
     title="SecureLens API",
@@ -30,8 +33,12 @@ def root():
 @app.post("/scan")
 def scan(request: ScanRequest):
 
-    result = scan_website(
+    return run_scan(
         request.url
     )
 
-    return result
+
+@app.get("/scan/{scan_id}")
+def get_saved_scan(scan_id: int):
+
+    return get_scan(scan_id)
