@@ -12,10 +12,6 @@ def detect_technology(url):
 
         headers = response.headers
 
-        print("\n=== HEADERS ===\n")
-
-        for key, value in headers.items():
-            print(f"{key}: {value}")
 
         technologies = {
             "server": "Unknown",
@@ -35,6 +31,12 @@ def detect_technology(url):
         if "CF-RAY" in headers:
             technologies["cdn"] = "Cloudflare"
 
+        elif "x-amz-cf-id" in headers:
+            technologies["cdn"] = "CloudFront"
+
+        elif "akamai" in str(headers).lower():
+            technologies["cdn"] = "Akamai"
+
         html = response.text.lower()
 
         # Detect WordPress
@@ -45,12 +47,12 @@ def detect_technology(url):
         elif "_next/static" in html:
             technologies["framework"] = "Next.js"
 
-        # Detect WordPress
-        elif "wp-content" in html:
-            technologies["framework"] = "WordPress"
 
         # Detect React
-        elif "data-reactroot" in html:
+        elif "__next" in html:
+            technologies["framework"] = "Next.js"
+
+        elif "react" in html:
             technologies["framework"] = "React"
 
         # Detect Angular

@@ -15,6 +15,8 @@ def run_scan(url):
     scan_record = ScanResult(
         target=result["target"],
         score=result["score"]["overall_score"],
+        grade=result["score"]["grade"],
+        risk_level=result["score"]["risk_level"],
         report=json.dumps(result)
     )
 
@@ -71,3 +73,33 @@ def get_all_scans():
         }
         for scan in scans
     ]
+
+
+
+def delete_scan(scan_id):
+
+    db = SessionLocal()
+
+    scan = (
+        db.query(ScanResult)
+        .filter(ScanResult.id == scan_id)
+        .first()
+    )
+
+    if not scan:
+
+        db.close()
+
+        return {
+            "error": "Scan not found"
+        }
+
+    db.delete(scan)
+
+    db.commit()
+
+    db.close()
+
+    return {
+        "message": f"Scan {scan_id} deleted successfully"
+    }

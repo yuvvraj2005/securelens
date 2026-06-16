@@ -4,7 +4,8 @@ from pydantic import BaseModel
 from backend.app.services.scanner_service import (
     run_scan,
     get_scan,
-    get_all_scans
+    get_all_scans,
+    delete_scan
 )
 
 import sys
@@ -48,3 +49,8 @@ def get_saved_scan(scan_id: int):
 def list_scans():
 
     return get_all_scans()
+
+@app.delete("/scan/{scan_id}")
+def remove_scan(scan_id: int):
+
+    return delete_scan(scan_id)

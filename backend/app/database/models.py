@@ -1,5 +1,6 @@
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, DateTime
+from datetime import datetime
 
 
 class Base(DeclarativeBase):
@@ -15,5 +16,14 @@ class ScanResult(Base):
     target = Column(String)
 
     score = Column(Integer)
+
+    grade = Column(String)
+
+    risk_level = Column(String)
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
 
     report = Column(Text)
