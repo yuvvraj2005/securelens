@@ -2,6 +2,7 @@ from scanner.header_scanner import scan_headers
 from scanner.ssl_scanner import get_ssl_info
 from scanner.score_engine import calculate_score
 from scanner.tech_detector import detect_technology
+from scanner.nmap_scanner import scan_ports
 import json
 
 
@@ -29,6 +30,11 @@ def scan_website(url):
         normalized_url
     )
 
+    nmap_results = scan_ports(
+        normalized_url
+    )
+
+
     # Calculate overall score
     score_results = calculate_score(
         header_results,
@@ -40,7 +46,8 @@ def scan_website(url):
         "score": score_results,
         "headers": header_results,
         "ssl": ssl_results,
-        "technology": technology_results
+        "technology": technology_results,
+        "nmap": nmap_results
     }
 
     return report
