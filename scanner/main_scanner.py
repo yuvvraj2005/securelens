@@ -38,7 +38,8 @@ def scan_website(url):
     # Calculate overall score
     score_results = calculate_score(
         header_results,
-        ssl_results
+        ssl_results,
+        nmap_results
     )
 
     report = {

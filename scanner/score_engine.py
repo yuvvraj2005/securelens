@@ -12,14 +12,43 @@ def calculate_score(
 
     # SSL contributes up to 30 points
     if ssl_report.get("ssl_enabled"):
+
         score += 20
 
-        days_remaining = ssl_report.get("days_remaining", 0)
+        days_remaining = ssl_report.get(
+            "days_remaining",
+            0
+        )
 
         if days_remaining > 90:
             score += 10
+
         elif days_remaining > 30:
             score += 5
+
+    # Nmap findings
+    open_ports = nmap_report.get(
+        "open_ports",
+        []
+    )
+
+    for port_info in open_ports:
+
+        port = int(
+            port_info["port"]
+        )
+
+        if port == 21:      # FTP
+            score -= 10
+
+        elif port == 23:    # Telnet
+            score -= 20
+
+        elif port == 3389:  # RDP
+            score -= 10
+
+    if score < 0:
+        score = 0
 
     # Grade
     if score >= 90:
