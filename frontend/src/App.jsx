@@ -1,3 +1,4 @@
+import History from "./components/History";
 import { useState } from "react";
 
 import {
@@ -229,6 +230,8 @@ function App() {
 
         </>
       )}
+
+      <History />
 
     </div>
   );

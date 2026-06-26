@@ -1,6 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from datetime import datetime
+import uuid
 
 
 class Base(DeclarativeBase):
