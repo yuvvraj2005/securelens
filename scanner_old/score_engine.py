@@ -1,12 +1,8 @@
 def calculate_score(
     header_report,
     ssl_report,
-    nmap_report,
-    nikto_report=None,
-    nessus_report=None,
+    nmap_report
 ):
-    nikto_report = nikto_report or {}
-    nessus_report = nessus_report or {}
 
     score = 0
 
@@ -16,63 +12,61 @@ def calculate_score(
 
     # SSL contributes up to 30 points
     if ssl_report.get("ssl_enabled"):
+
         score += 20
 
-        days_remaining = ssl_report.get("days_remaining", 0)
+        days_remaining = ssl_report.get(
+            "days_remaining",
+            0
+        )
 
         if days_remaining > 90:
             score += 10
+
         elif days_remaining > 30:
             score += 5
 
-    # Nmap findings: penalize obviously risky exposed services
-    open_ports = nmap_report.get("open_ports", [])
+    # Nmap findings
+    open_ports = nmap_report.get(
+        "open_ports",
+        []
+    )
 
     for port_info in open_ports:
-        port = int(port_info["port"])
+
+        port = int(
+            port_info["port"]
+        )
 
         if port == 21:      # FTP
             score -= 10
+
         elif port == 23:    # Telnet
             score -= 20
+
         elif port == 3389:  # RDP
             score -= 10
 
-    # Nikto findings: each web-server misconfig/vuln shaves a small amount
-    nikto_findings = nikto_report.get("findings", [])
-    score -= min(len(nikto_findings) * 2, 20)
-
-    # Nessus findings: weighted by severity, capped so one scan can't wipe
-    # the whole score
-    nessus_penalty = 0
-    for finding in nessus_report.get("findings", []):
-        severity = finding.get("severity")
-        nessus_penalty += {
-            "Critical": 15,
-            "High": 10,
-            "Medium": 5,
-            "Low": 2,
-        }.get(severity, 0)
-    score -= min(nessus_penalty, 40)
-
     if score < 0:
         score = 0
-    if score > 100:
-        score = 100
 
     # Grade
     if score >= 90:
         grade = "A"
         risk = "Low"
+
     elif score >= 80:
         grade = "B"
         risk = "Low"
+
     elif score >= 70:
         grade = "C"
         risk = "Medium"
+
     elif score >= 60:
         grade = "D"
         risk = "High"
+
     else:
         grade = "F"
         risk = "Critical"
@@ -80,5 +74,5 @@ def calculate_score(
     return {
         "overall_score": score,
         "grade": grade,
-        "risk_level": risk,
+        "risk_level": risk
     }
