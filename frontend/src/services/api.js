@@ -1,4 +1,4 @@
-const API_BASE = "https://securelens-m9y9.onrender.com/scans";
+const API_BASE = "https://securelens-m9y9.onrender.com";
 
 class ApiError extends Error {
   constructor(message, status) {
