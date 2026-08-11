@@ -1,19 +1,15 @@
 """
 Nikto integration.
 
-Nikto (https://github.com/sullo/nikto) is a CLI web-server scanner. We shell
-out to it with `-Format json` so we get structured output, and fall back to
-a clear error object if the binary isn't installed or the scan fails/times
-out. Nikto scans can take a while on a slow target, so we cap it with a
-timeout and let the caller run it in a background job (see
-backend/app/services/scanner_service.py).
+Nikto is a CLI web-server scanner. We shell out to it with JSON output
+and convert the results into the SecureLens report format.
 """
 
 import json
+import os
 import shutil
 import subprocess
 import tempfile
-import os
 from urllib.parse import urlparse
 
 NIKTO_TIMEOUT_SECONDS = int(os.getenv("NIKTO_TIMEOUT_SECONDS", "300"))
@@ -31,14 +27,15 @@ def scan_with_nikto(url: str) -> dict:
             "enabled": False,
             "error": (
                 "nikto is not installed or not on PATH. "
-                "Install it (see scripts/setup.sh) or set ENABLE_NIKTO=false."
+                "Install it or set ENABLE_NIKTO=false."
             ),
         }
 
     hostname = urlparse(url).hostname or url
 
     with tempfile.NamedTemporaryFile(
-        suffix=".json", delete=False
+        suffix=".json",
+        delete=False,
     ) as tmp:
         output_path = tmp.name
 
@@ -46,11 +43,16 @@ def scan_with_nikto(url: str) -> dict:
         subprocess.run(
             [
                 binary,
-                "-h", url,
-                "-Format", "json",
-                "-output", output_path,
-                "-Tuning", "x6",   # skip the noisiest/DoS-prone tests
-                "-ask", "no",
+                "-h",
+                url,
+                "-Format",
+                "json",
+                "-output",
+                output_path,
+                "-Tuning",
+                "x6",
+                "-ask",
+                "no",
             ],
             capture_output=True,
             text=True,
@@ -58,20 +60,35 @@ def scan_with_nikto(url: str) -> dict:
         )
 
         findings = []
+
         try:
             with open(output_path, "r") as f:
                 raw = json.load(f)
-                for vuln in raw.get("vulnerabilities", []):
-                    findings.append(
-                        {
-                            "id": vuln.get("id"),
-                            "method": vuln.get("method"),
-                            "url": vuln.get("url"),
-                            "message": vuln.get("msg", vuln.get("message")),
-                        }
-                    )
+
+            if isinstance(raw, dict):
+                vulnerabilities = raw.get("vulnerabilities", [])
+            elif isinstance(raw, list):
+                vulnerabilities = raw
+            else:
+                vulnerabilities = []
+
+            for vuln in vulnerabilities:
+                if not isinstance(vuln, dict):
+                    continue
+
+                findings.append(
+                    {
+                        "id": vuln.get("id"),
+                        "method": vuln.get("method"),
+                        "url": vuln.get("url"),
+                        "message": vuln.get(
+                            "msg",
+                            vuln.get("message"),
+                        ),
+                    }
+                )
+
         except (json.JSONDecodeError, FileNotFoundError):
-            # Nikto sometimes writes nothing if it found zero issues
             findings = []
 
         return {
@@ -85,9 +102,13 @@ def scan_with_nikto(url: str) -> dict:
         return {
             "enabled": True,
             "target": hostname,
-            "error": f"nikto scan exceeded {NIKTO_TIMEOUT_SECONDS}s timeout",
+            "error": (
+                f"nikto scan exceeded "
+                f"{NIKTO_TIMEOUT_SECONDS}s timeout"
+            ),
             "findings": [],
         }
+
     except Exception as e:
         return {
             "enabled": True,
@@ -95,6 +116,7 @@ def scan_with_nikto(url: str) -> dict:
             "error": str(e),
             "findings": [],
         }
+
     finally:
         if os.path.exists(output_path):
             os.remove(output_path)
