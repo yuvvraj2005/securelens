@@ -12,14 +12,20 @@ import subprocess
 import tempfile
 from urllib.parse import urlparse
 
-NIKTO_TIMEOUT_SECONDS = int(os.getenv("NIKTO_TIMEOUT_SECONDS", "300"))
+
+NIKTO_TIMEOUT_SECONDS = int(
+    os.getenv("NIKTO_TIMEOUT_SECONDS", "300")
+)
 
 
 def _nikto_binary():
+    """Find the Nikto executable."""
     return shutil.which("nikto") or shutil.which("nikto.pl")
 
 
 def scan_with_nikto(url: str) -> dict:
+    """Run Nikto against a target URL and return structured results."""
+
     binary = _nikto_binary()
 
     if not binary:
@@ -29,6 +35,7 @@ def scan_with_nikto(url: str) -> dict:
                 "nikto is not installed or not on PATH. "
                 "Install it or set ENABLE_NIKTO=false."
             ),
+            "findings": [],
         }
 
     hostname = urlparse(url).hostname or url
@@ -40,6 +47,7 @@ def scan_with_nikto(url: str) -> dict:
         output_path = tmp.name
 
     try:
+        # Run Nikto
         subprocess.run(
             [
                 binary,
@@ -61,19 +69,39 @@ def scan_with_nikto(url: str) -> dict:
 
         findings = []
 
+        # Parse Nikto JSON output
         try:
             with open(output_path, "r") as f:
                 raw = json.load(f)
 
+            # Nikto may return either a dictionary containing
+            # vulnerabilities or a list of vulnerability objects.
             if isinstance(raw, dict):
-                vulnerabilities = raw.get("vulnerabilities", [])
+                vulnerabilities = raw.get(
+                    "vulnerabilities",
+                    [],
+                )
             elif isinstance(raw, list):
                 vulnerabilities = raw
             else:
                 vulnerabilities = []
 
             for vuln in vulnerabilities:
+
+                # Ignore anything that isn't a dictionary.
                 if not isinstance(vuln, dict):
+                    continue
+
+                # Nikto normally uses "msg".
+                # Some versions/output formats may use "message".
+                message = (
+                    vuln.get("msg")
+                    or vuln.get("message")
+                )
+
+                # Do not create fake findings containing
+                # null values.
+                if not message:
                     continue
 
                 findings.append(
@@ -81,14 +109,16 @@ def scan_with_nikto(url: str) -> dict:
                         "id": vuln.get("id"),
                         "method": vuln.get("method"),
                         "url": vuln.get("url"),
-                        "message": vuln.get(
-                            "msg",
-                            vuln.get("message"),
-                        ),
+                        "message": message,
                     }
                 )
 
-        except (json.JSONDecodeError, FileNotFoundError):
+        except (
+            json.JSONDecodeError,
+            FileNotFoundError,
+        ):
+            # Nikto may produce no JSON file when there
+            # are no findings.
             findings = []
 
         return {
@@ -118,10 +148,19 @@ def scan_with_nikto(url: str) -> dict:
         }
 
     finally:
+        # Always remove the temporary JSON file.
         if os.path.exists(output_path):
             os.remove(output_path)
 
 
 if __name__ == "__main__":
     target = input("Enter URL: ").strip()
-    print(json.dumps(scan_with_nikto(target), indent=4))
+
+    result = scan_with_nikto(target)
+
+    print(
+        json.dumps(
+            result,
+            indent=4,
+        )
+    )
